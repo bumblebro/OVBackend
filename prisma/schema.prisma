@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String            @id @default(uuid())
+  name          String
+  password      String            // Hashed password for auth
+  bio           String?
+  city          String?
+  profilePic    String?
+  joinedAt      DateTime          @default(now())
+  inviteSlots   Int               @default(2)
+  invitedById   String?
+  invitedBy     User?             @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedUsers  User[]            @relation("InvitedBy")
+  vibes         Vibe[]            @relation("AdminVibes")
+  contributions VibeContributor[]
+  media         Media[]
+  viewedVibes   VibeViewer[]
+  feedEvents    FeedEvent[]
+  notifications Notification[]
+  sentInvites   Invite[]          @relation("SentInvites")
+  receivedInvites Invite[]        @relation("ReceivedInvites")
+  suggestedUsers SuggestedUser[]
+  drafts        Draft[]
+  favorites     Favorite[]
+  flaggedMedia  FlaggedMedia[]
+}
+
+model Vibe {
+  id            String            @id @default(uuid())
+  title         String
+  description   String?
+  date          DateTime
+  location      String?
+  coverImage    String?
+  type          String            // "SOLO" or "SHARED"
+  state         String            // "DRAFT", "IN_PROGRESS", "FINALIZED", "UPDATED", "ABANDONED"
+  adminId       String
+  admin         User              @relation("AdminVibes", fields: [adminId], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  finalizedAt   DateTime?
+  expiryDate    DateTime?
+  contributors  VibeContributor[]
+  media         Media[]
+  viewers       VibeViewer[]
+  invites       Invite[]
+  drafts        Draft[]
+}
+
+model VibeContributor {
+  id            String   @id @default(uuid())
+  vibeId        String
+  vibe          Vibe     @relation(fields: [vibeId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  role          String   // "ADMIN" or "CONTRIBUTOR"
+  joinedAt      DateTime @default(now())
+  leftAt        DateTime?
+  mediaRemoved  Boolean  @default(false)
+  status        String   // "INVITED", "ACCEPTED", "DECLINED", "LEFT"
+}
+
+model Media {
+  id            String   @id @default(uuid())
+  vibeId        String
+  vibe          Vibe     @relation(fields: [vibeId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  type          String   // "IMAGE", "VIDEO", "AUDIO"
+  url           String
+  caption       String?
+  createdAt     DateTime @default(now())
+  exifData      String?
+  isFlagged     Boolean  @default(false)
+  flaggedReason String?
+  favorites     Favorite[]
+  flaggedMedia  FlaggedMedia[]
+}
+
+model VibeViewer {
+  id            String   @id @default(uuid())
+  vibeId        String
+  vibe          Vibe     @relation(fields: [vibeId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  viewedAt      DateTime @default(now())
+}
+
+model FeedEvent {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  eventType     String
+  data          String   // JSON string
+  createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  type          String
+  data          String   // JSON string
+  readAt        DateTime?
+  createdAt     DateTime @default(now())
+}
+
+model Invite {
+  id            String   @id @default(uuid())
+  vibeId        String
+  vibe          Vibe     @relation(fields: [vibeId], references: [id])
+  senderId      String
+  sender        User     @relation("SentInvites", fields: [senderId], references: [id])
+  receiverId    String
+  receiver      User     @relation("ReceivedInvites", fields: [receiverId], references: [id])
+  status        String   // "PENDING", "ACCEPTED", "DECLINED"
+  createdAt     DateTime @default(now())
+  respondedAt   DateTime?
+}
+
+model SuggestedUser {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  suggestedUserId String
+  reason        String
+  expiresAt     DateTime
+}
+
+model CityFeedCache {
+  id            String   @id @default(uuid())
+  city          String
+  data          String   // JSON string
+  updatedAt     DateTime @default(now())
+}
+
+model Draft {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  vibeId        String
+  vibe          Vibe     @relation(fields: [vibeId], references: [id])
+  expiresAt     DateTime
+  deletedAt     DateTime?
+}
+
+model Favorite {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  mediaId       String
+  media         Media    @relation(fields: [mediaId], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model FlaggedMedia {
+  id            String   @id @default(uuid())
+  mediaId       String
+  media         Media    @relation(fields: [mediaId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  reason        String
+  createdAt     DateTime @default(now())
+  resolvedAt    DateTime?
+} 

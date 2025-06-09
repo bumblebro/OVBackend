@@ -23,8 +23,9 @@ export const register = async (req: Request, res: Response) => {
     const user = await prisma.user.create({
       data: {
         email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         name,
+        username: name,
       },
     });
 
@@ -40,7 +41,7 @@ export const register = async (req: Request, res: Response) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error creating user" });
+    res.status(500).json({ error: "Error creating user", details: error });
   }
 };
 
@@ -58,13 +59,14 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check password
-    const isMatch = await comparePassword(password, user.password);
+    const isMatch = await comparePassword(password, user.passwordHash);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // Generate token
     const token = generateToken({ id: user.id });
+    console.log(`match`, token);
 
     res.json({
       user: {
@@ -75,6 +77,7 @@ export const login = async (req: Request, res: Response) => {
       token,
     });
   } catch (error) {
+    console.log(`error`, error);
     res.status(500).json({ error: "Error logging in" });
   }
 };

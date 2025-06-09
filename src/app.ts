@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import env from "./config/env";
 import { errorHandler } from "./middlewares/error.middleware";
 
 // Import routes
@@ -12,6 +11,7 @@ import vibeContributorRoutes from "./routes/vibeContributor.routes";
 import notificationRoutes from "./routes/notification.routes";
 import favoriteRoutes from "./routes/favorite.routes";
 import flaggedMediaRoutes from "./routes/flaggedMedia.routes";
+import { env } from "process";
 
 const app = express();
 

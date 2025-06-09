@@ -210,3 +210,61 @@ model InviteQueue {
   vibeId    String
   invitedAt DateTime @default(now())
 } 
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  model     String
+  modelId   String
+  timestamp DateTime @default(now())
+}
+
+
+
+enum VibeStatus {
+  draft
+  in_progress
+  finalized
+  abandoned
+}
+
+enum ContributorRole {
+  admin
+  contributor
+}
+
+enum MediaType {
+  image
+  video
+  audio
+}
+
+enum InviteStatus {
+  pending
+  accepted
+  declined
+}
+
+enum NotificationType {
+  invite
+  newMedia
+  vibePublished
+  vibeViewed
+  contributorJoined
+  contributorLeft
+  etc // define more as needed
+}
+
+enum FeedEventType {
+  vibePublished
+  mediaAdded
+  vibeFinalized
+}
+
+
+// status VibeStatus
+// role ContributorRole
+// mediaType MediaType
+// type NotificationType
+// eventType FeedEventType

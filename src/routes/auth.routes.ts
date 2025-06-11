@@ -1,18 +1,11 @@
 import { Router } from "express";
 import { auth } from "../middlewares/auth.middleware";
-import {
-  register,
-  login,
-  getCurrentUser,
-} from "../controllers/auth.controller";
+import { syncUser, getCurrentUser } from "../controllers/auth.controller";
 
 const router = Router();
 
-// Register
-router.post("/register", register);
-
-// Login
-router.post("/login", login);
+// Sync user data with Firebase
+router.post("/sync", syncUser);
 
 // Get current user
 router.get("/me", auth, getCurrentUser);

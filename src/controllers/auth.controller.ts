@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-import { generateToken } from "../utils/jwt";
-import { hashPassword, comparePassword } from "../utils/hash";
 import prisma from "../config/prisma";
 
-export const register = async (req: Request, res: Response) => {
+export const syncUser = async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, name, uid } = req.body;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -13,24 +11,34 @@ export const register = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(400).json({ error: "Email already registered" });
+      // Update existing user
+      const user = await prisma.user.update({
+        where: { email },
+        data: {
+          name,
+          firebaseUid: uid,
+        },
+      });
+
+      return res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      });
     }
 
-    // Hash password
-    const hashedPassword = await hashPassword(password);
-
-    // Create user
+    // Create new user
     const user = await prisma.user.create({
       data: {
         email,
-        passwordHash: hashedPassword,
         name,
         username: name,
+        firebaseUid: uid,
+        passwordHash: "", // Required field but not used with Firebase
       },
     });
-
-    // Generate token
-    const token = generateToken({ id: user.id });
 
     res.status(201).json({
       user: {
@@ -38,54 +46,18 @@ export const register = async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
       },
-      token,
     });
   } catch (error) {
-    res.status(500).json({ error: "Error creating user", details: error });
-  }
-};
-
-export const login = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Check password
-    const isMatch = await comparePassword(password, user.passwordHash);
-    if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    // Generate token
-    const token = generateToken({ id: user.id });
-    console.log(`match`, token);
-
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      token,
-    });
-  } catch (error) {
-    console.log(`error`, error);
-    res.status(500).json({ error: "Error logging in" });
+    res.status(500).json({ error: "Error syncing user", details: error });
   }
 };
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
+    console.log(`Fetching user with Firebase UID: ${req.user!.id}`);
+    
     const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
+      where: { firebaseUid: req.user!.id },
     });
 
     if (!user) {

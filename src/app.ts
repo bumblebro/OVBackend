@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { errorHandler } from "./middlewares/error.middleware";
+import env from "./config/env";
 
 // Import routes
 import authRoutes from "./routes/auth.routes";
@@ -11,7 +12,6 @@ import vibeContributorRoutes from "./routes/vibeContributor.routes";
 import notificationRoutes from "./routes/notification.routes";
 import favoriteRoutes from "./routes/favorite.routes";
 import flaggedMediaRoutes from "./routes/flaggedMedia.routes";
-import { env } from "process";
 
 const app = express();
 
@@ -38,7 +38,6 @@ app.get("/health", (req, res) => {
 app.use(errorHandler);
 
 // Start server
-const PORT = env.PORT;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(env.PORT, () => {
+  console.log(`Server is running on port ${env.PORT}`);
 });

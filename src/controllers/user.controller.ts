@@ -9,7 +9,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
         id: true,
         email: true,
         name: true,
-        createdAt: true,
+        joinedAt: true,
         updatedAt: true,
       },
     });
